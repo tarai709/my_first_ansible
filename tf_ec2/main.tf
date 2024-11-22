@@ -20,7 +20,7 @@ data "aws_ami" "al2023" {
   }
 }
 
-# Create security group for ENI
+# Create security group for EC2 Instances
 resource "aws_security_group" "sg" {
   name        = var.security_group_name
   vpc_id      = data.aws_subnet.subnet.vpc_id
@@ -46,17 +46,6 @@ resource "aws_vpc_security_group_egress_rule" "egress" {
   from_port         = 443
   to_port           = 443
   ip_protocol       = "tcp"
-}
-
-# Create ENI for EC2 Instances
-resource "aws_network_interface" "eni" {
-  for_each        = toset(var.ec2_names)
-  subnet_id       = data.aws_subnet.subnet.id
-  security_groups = [aws_security_group.sg.id]
-
-  tags = {
-    Name = "eni-${each.value}"
-  }
 }
 
 # Create key_pair for EC2 Instances
@@ -88,12 +77,10 @@ resource "aws_instance" "ec2" {
   ami           = var.ami_id == null ? data.aws_ami.al2023.id : var.ami_id
   instance_type = "t2.micro"
   key_name      = aws_key_pair.key_pair.key_name
-  associate_public_ip_address = var.associate_public_ip_address
+  subnet_id     = data.aws_subnet.subnet.id
 
-  network_interface {
-    network_interface_id = aws_network_interface.eni[each.value].id
-    device_index         = 0
-  }
+  vpc_security_group_ids      = [aws_security_group.sg.id]
+  associate_public_ip_address = var.associate_public_ip_address
 
   tags = {
     Name = each.value
@@ -105,5 +92,5 @@ output "ec2_public_ip" {
 }
 
 output "ec2_private_ip" {
-  value = {for k, v in aws_network_interface.eni : k => v.private_ips}
+  value = {for k, v in aws_instance.ec2 : k => v.private_ip}
 }
