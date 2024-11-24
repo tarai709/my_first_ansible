@@ -1,0 +1,7 @@
+---
+all:
+  hosts:
+    ansible-node1:
+      ansible_host: x.x.x.x
+      ansible_user: ec2-user
+      ansible_ssh_private_key_file: /home/cloudshell-user/my_first_ansible-master/tf_ec2/ec2-user.pem

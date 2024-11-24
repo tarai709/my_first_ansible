@@ -1,0 +1,27 @@
+---
+- name: Setup nginx and user configuration
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Ensure nginx is installed
+      ansible.builtin.yum:
+        name: nginx
+        state: present
+
+    - name: Ensure nginx service is started and enabled
+      ansible.builtin.service:
+        name: nginx
+        state: started
+        enabled: yes
+
+    - name: Create group
+      ansible.builtin.group:
+        name: test-group
+        state: present
+
+    - name: Create user
+      ansible.builtin.user:
+        name: test-user
+        group: test-group
+        state: present
